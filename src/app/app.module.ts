@@ -24,7 +24,7 @@ const appInitializerFn = (appConfig: AppConfigService) => {
   providers: [
     {
       provide: APP_INITIALIZER,
-      useFactory: appInitializerFn,
+      useFactory: appInitializerFn, // call our appConfigService when the app is still initialising so the config is ready for rest of app
       multi: true,
       deps: [AppConfigService],
     },

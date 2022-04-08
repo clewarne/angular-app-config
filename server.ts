@@ -26,6 +26,7 @@ export function app(): express.Express {
   server.get('/api/config', (req, res) => {
     try {
       const config: any = {};
+      // Go through our environment file and find any env keys that match our config variables prefixed with ANGULAR_CONFIG_
       Object.keys(environment).forEach((key) => {
         const envKey = `ANGULAR_CONFIG_${key}`;
         if (process.env[envKey]) {

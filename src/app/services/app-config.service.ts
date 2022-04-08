@@ -13,6 +13,9 @@ export class AppConfigService {
   constructor(private http: HttpClient) {
   }
 
+  /**
+   * Call to api endpoint that loads the config and then override any local environment settings with the response
+   */
   async loadAppConfig() {
     try {
       const data = await lastValueFrom(this.http.get('/api/config', { headers: { skip: 'true' } }));

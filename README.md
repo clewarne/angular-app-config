@@ -1,27 +1,100 @@
-# AngularAppConfig
+# Angular AppConfig
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.1.2.
+This project is a simple POC to show how to setup an Angular app to be able to get it's application configuration from
+environment variables.
 
-## Development server
+## What is going on here?
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Angular in itself is unable to read environment variables at runtime due to it running on the client's browser so we
+need a way to get this from the server.
 
-## Code scaffolding
+In order to achieve this I setup a simple api endpoint in the express server that serves the Angular Universal app. This
+endpoint goes through the environment file and looks for any possible variables that are set in env vars to override,
+and then sends just the overridden values in the response.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Now on the Angular side we need to ensure that these values are loaded before the rest of the application executes so we
+don't have a mismatch between configs in different points of our app. To do this we can hook it up in our providers
+to `APP_INITIALIZER` and this will make sure the app config is fully retrieved before bootstrapping the rest of the app.
 
-## Build
+E.g. in `app.module.ts`
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```ts
+// in your providers:
+providers: [
+  {
+    provide: APP_INITIALIZER,
+    useFactory: appInitializerFn,
+    multi: true,
+    deps: [AppConfigService],
+  },
+]
 
-## Running unit tests
+// appInitializerFn is the function that will actually be run to do whatever you need, in this case load our config
+const appInitializerFn = (appConfig: AppConfigService) => {
+  return () => {
+    return appConfig.loadAppConfig();
+  };
+};
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+The loadAppConfig function simply does an http get to the api endpoint to retrieve the config
 
-## Running end-to-end tests
+`app-config.service.ts`
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```ts
+// Note using async/await because we only want first first response, we don't need a continuous subscription to the observable
+// this also helps to ensure that the code will wait for the response before continuing, we need this to block 
+// the rest of the code from executing
+async
+loadAppConfig()
+{
+  try {
+    const data = await lastValueFrom(this.http.get('/api/config', { headers: { skip: 'true' } }));
+    this.config = { ...environment, ...data };
+  } catch (err) {
+    console.warn('Unable to reach config service, using environment file.');
+  }
+}
+```
 
-## Further help
+## Getting started
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+To simply run this project and see how this works
+
+```
+npm run dev:ssr
+
+OR
+
+npm run build:ssr
+npm run server:ssr
+```
+
+This will startup the Angular Universal server and once the app starts up you will see a screen that shows you the
+application config that has been loaded. For this example, to change the config, simple set the variables with the same
+name as the ones found in the environment file, prefixed with `ANGULAR_CONFIG_` to update the settings.
+
+E.g. the following will change the apiUrl and production boolean
+
+```
+ANGULAR_CONFIG_apiUrl=https://localhost:4001 // default is empty string
+ANGULAR_CONFIG_production=true // default false (when running dev mode)
+```
+
+## Pros
+
+- Allows you to have a single build that can be deployed to multiple environments
+- Allows you to change application settings without code changes or needing to redeploy your application
+
+## Cons
+
+- Increases initial loading time due to needing to do an api call before the rest of the application can even start
+  loading, so the clients internet speed plays a huge role. (In this particular example, using angular universal ensures
+  that the time to first paint will still be fast and then the client side app will load in the background and switch to
+  client side once complete, this will help ensure the client can see something faster, but the time to interactive is
+  still negatively impacted)
+
+## Without Angular Universal
+
+This same concept can also be applied to a pure client side Angular application that does not use Angular Universal, all
+you need is a server somewhere to host your api config endpoint that can read that particular servers env variables
