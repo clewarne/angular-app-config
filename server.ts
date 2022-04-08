@@ -7,6 +7,7 @@ import { join } from 'path';
 import { AppServerModule } from './src/main.server';
 import { APP_BASE_HREF } from '@angular/common';
 import { existsSync } from 'fs';
+import { environment } from 'src/environments/environment';
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -22,8 +23,21 @@ export function app(): express.Express {
   server.set('view engine', 'html');
   server.set('views', distFolder);
 
-  // Example Express Rest API endpoints
-  // server.get('/api/**', (req, res) => { });
+  server.get('/api/config', (req, res) => {
+    try {
+      const config: any = {};
+      Object.keys(environment).forEach((key) => {
+        const envKey = `ANGULAR_CONFIG_${key}`;
+        if (process.env[envKey]) {
+          config[key] = process.env[envKey];
+        }
+      });
+      res.json(config);
+    } catch (err) {
+      res.status(500).send(err);
+    }
+  });
+
   // Serve static files from /browser
   server.get('*.*', express.static(distFolder, {
     maxAge: '1y'
