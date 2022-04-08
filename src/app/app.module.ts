@@ -5,6 +5,7 @@ import { AppConfigService } from 'src/app/services/app-config.service';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { PrerenderPageComponent } from './pages/prerender-page/prerender-page.component';
 
 const appInitializerFn = (appConfig: AppConfigService) => {
   return () => {
@@ -15,6 +16,7 @@ const appInitializerFn = (appConfig: AppConfigService) => {
 @NgModule({
   declarations: [
     AppComponent,
+    PrerenderPageComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'serverApp' }),
