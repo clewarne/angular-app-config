@@ -45,8 +45,7 @@ The loadAppConfig function simply does an http get to the api endpoint to retrie
 // Note using async/await because we only want first first response, we don't need a continuous subscription to the observable
 // this also helps to ensure that the code will wait for the response before continuing, we need this to block 
 // the rest of the code from executing
-async
-loadAppConfig()
+async loadAppConfig()
 {
   try {
     const data = await lastValueFrom(this.http.get('/api/config', { headers: { skip: 'true' } }));
