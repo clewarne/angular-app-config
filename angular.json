@@ -167,7 +167,7 @@
           "builder": "@nguniversal/builders:prerender",
           "options": {
             "routes": [
-              "/"
+              "/prerender"
             ]
           },
           "configurations": {
