@@ -73,7 +73,7 @@ This will startup the Angular Universal server and once the app starts up you wi
 application config that has been loaded. For this example, to change the config, simple set the variables with the same
 name as the ones found in the environment file, prefixed with `ANGULAR_CONFIG_` to update the settings.
 
-E.g. the following will change the apiUrl and production boolean
+E.g. the following environment variables will change the apiUrl and production boolean
 
 ```
 ANGULAR_CONFIG_apiUrl=https://localhost:4001 // default is empty string
