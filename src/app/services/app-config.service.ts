@@ -1,6 +1,6 @@
-import { isPlatformBrowser, PlatformLocation } from '@angular/common';
+import { PlatformLocation } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { APP_ID, Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { makeStateKey, TransferState } from '@angular/platform-browser';
 import { lastValueFrom } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -15,8 +15,6 @@ export class AppConfigService {
 
   constructor(private http: HttpClient,
               private readonly transferState: TransferState,
-              @Inject(PLATFORM_ID) private readonly platformId: Object,
-              @Inject(APP_ID) private appId: string,
               private loc: PlatformLocation) {
   }
 
@@ -24,22 +22,16 @@ export class AppConfigService {
    * Call to api endpoint that loads the config and then override any local environment settings with the response
    */
   async loadAppConfig() {
-    const platform = isPlatformBrowser(this.platformId) ?
-      'in the browser' : 'on the server';
-    console.log(`loadAppConfig : Running ${platform} with appId=${this.appId}`);
-
-    console.log(`${this.loc.protocol}//${this.loc.hostname}:${this.loc.port}/api/config`);
     const found = this.transferState.hasKey(RESULT_KEY);
-    console.log('found: ', found, this.transferState);
     try {
       if (found) {
         this.config = this.transferState.get<any>(RESULT_KEY, null);
-        console.log('yay we have the thing from the server', this.config);
+        this.config.loadedFromServerCache = true;
       } else {
-        const data = await lastValueFrom(this.http.get(`${this.loc.protocol}//${this.loc.hostname}:${this.loc.port}/api/config`, { headers: { skip: 'true' } }));
+        const data = await lastValueFrom(
+          this.http.get(`${this.loc.protocol}//${this.loc.hostname}:${this.loc.port}/api/config`, { headers: { skip: 'true' } }));
         this.config = { ...environment, ...data };
         this.transferState.set(RESULT_KEY, this.config);
-        console.log('done api call', this.config, this.transferState);
       }
     } catch (err) {
       this.config = { ...environment };
